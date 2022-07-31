@@ -16,11 +16,11 @@ The `gnn_explainer`, `pgexplainer`, and `subgraphx` implementations are based on
 
 https://github.com/divelab/DIG/tree/dig/benchmarks/xgraph
 
-The `graphsvx` implementaiton is based on the official GraphSVX code, where dataset processing and GNNs are changed to be aline with DIG.
+The `graphsvx` implementaiton is based on the official GraphSVX code, where datasets processing and GNNs are changed to align with DIG.
 
 https://github.com/AlexDuvalinho/GraphSVX
 
-The `orphicx` implementaiton is based on the official OrphicX code, where dataset processing and GNNs are changed to be aline with DIG.
+The `orphicx` implementaiton is based on the official OrphicX code, where datasets processing and GNNs are changed to align with DIG.
 
 https://github.com/WanyuGroup/CVPR2022-OrphicX
 <!-- #endregion -->

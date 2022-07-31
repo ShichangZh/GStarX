@@ -1,0 +1,12 @@
+**/datasets
+**/results
+**/output
+**/*.npz
+**/*.pdf
+**/*.ipynb
+**/__pycache__
+**/*.ipynb_checkpoints
+**/.hydra
+**/log
+**/experiments
+**/temp

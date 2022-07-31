@@ -1,5 +1,5 @@
 <!-- #region -->
-### Our code is heavily based on the DIG library, especially the baselines. However, there are a few differences. Users may choose to run the baseline models by importing them from DIG directly. We summarize the difference of our code from DIG 0.1.2
+### Our code is heavily based on the DIG library, especially the baseline implementations. However, there are a few differences. Users may choose to run baselines by importing them from DIG directly. We summarize the difference of our code from DIG 0.1.2 below
 
 
 - We used our own evaluation metric function instead of the original `XCollector` because we need to compute `norm-fidelity`, `norm-inv-fidelity`, and `h-fidelity` as described in the paper, and the XCollector doesn't allow that. It can be checked that the `fidelity`, `inv-fidelity`, and `sparsity` results are the same for ours and the `XCollector`.
