@@ -52,11 +52,10 @@ We borrow the `GCN`, `GIN`, and `GAT` implementation and the model training scri
 
 ### Usage
 - Run the GStarX to explain trained GNN models 
-  - A simple example
+  - A simple example is shown below, and more examples are in `script.sh`
 ```bash
 python run_gstarx.py models='gcn' datasets='mutag'
 ```
-  - We provide more examples in `script.sh`
 
 - Run a baslineline method to explain trained GNN models
    - Run baseline scripts like the example below by replacing `method` with `gnn_explainer`, `pgexplainer`, `subgraphx`, `graphsvx`, or `orphicx`.
@@ -64,9 +63,9 @@ python run_gstarx.py models='gcn' datasets='mutag'
 python baselines/run_${method}.py models='gcn' datasets='bace'
 ```
 
-- You can also train GNNs you want to explain by
-  1. If not GCN, GIN, or GAT, add the model architecture to `getNets.py`, and add its configuration to `config`
-  2. Run `train_gnns.py` like the example below
+- Train new GNNs to explain
+  - If not GCN, GIN, or GAT, add the model architecture to `getNets.py`, and add its configuration to `config`
+  - Run `train_gnns.py` as the example below
 ```bash
 python train_gnns.py datasets=ba_2motifs models=gat
 ```
@@ -93,7 +92,7 @@ GStarX vs. baseline methods for graph prediction explanation in terms of the H-F
 
 ## Cite
 
-Please cite our paper if you use this code in your own work:
+Please cite our paper if you find this code is useful. Thank you.
 ```
 @misc{zhang2022explaining,
       title={Explaining Graph-level Predictions with Communication Structure-Aware Cooperative Games}, 
@@ -106,7 +105,7 @@ Please cite our paper if you use this code in your own work:
 ```
 
 ## Reference
-Our code heavily relies on the DIG library. We encourage the reader to check it out:
+Our code heavily relies on the DIG library. We encourage readers to check it out:
 
 https://github.com/divelab/DIG/tree/dig/benchmarks/xgraph
 
