@@ -1,0 +1,30 @@
+gnn_saving_path: 'checkpoints'
+gnn_name: 'gat'
+add_self_loop: False
+
+
+param:
+  graph_sst2:
+    learning_rate: 0.001
+    weight_decay: 0.0
+    milestones: None
+    gamma: None
+    batch_size: 256
+    num_epochs: 50
+    num_early_stop: 10
+    gat_dropout: 0 
+    gat_heads: 10
+    gat_hidden: 10
+    gat_concate: True
+    gnn_latent_dim:
+      - 100
+      - 100
+      - 100
+    gnn_dropout: 0.0
+    add_self_loop: False
+    gnn_emb_normalization: False
+    graph_classification: True
+    node_classification: False
+    readout: 'max'
+    fc_latent_dim: []
+    

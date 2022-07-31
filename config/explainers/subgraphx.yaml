@@ -1,0 +1,80 @@
+explainer_name: 'subgraphx'
+explanation_result_path: ''
+max_ex_size: 100
+sparsity: 0.5
+
+param:
+  mutag:
+    rollout: 20
+    high2low: False
+    c_puct: 10.0
+    min_atoms: 3
+    expand_atoms: 12
+    reward_method: 'mc_l_shapley'
+    subgraph_building_method: 'zero_filling'
+    verbose: False
+  bbbp:
+    rollout: 20
+    high2low: False
+    c_puct: 5.0
+    min_atoms: 3
+    expand_atoms: 12
+    reward_method: 'mc_l_shapley'
+    subgraph_building_method: 'zero_filling'
+    verbose: False
+  graph_sst2:
+    rollout: 20
+    high2low: False
+    c_puct: 5.0
+    min_atoms: 3
+    expand_atoms: 12
+    reward_method: 'mc_l_shapley'
+    subgraph_building_method: 'zero_filling'
+    verbose: False
+  ba_2motifs:
+    rollout: 20
+    high2low: True
+    c_puct: 10.0
+    min_atoms: 5
+    expand_atoms: 20
+    reward_method: 'mc_l_shapley'
+    subgraph_building_method: 'zero_filling'
+    verbose: False
+  bace:
+    rollout: 2
+    high2low: False
+    c_puct: 10.0
+    min_atoms: 5
+    expand_atoms: 12
+    reward_method: 'mc_l_shapley'
+    subgraph_building_method: 'zero_filling'
+    verbose: False
+  twitter:
+    rollout: 2
+    high2low: False
+    c_puct: 5.0
+    min_atoms: 5
+    expand_atoms: 20
+    reward_method: 'mc_l_shapley'
+    subgraph_building_method: 'zero_filling'
+    verbose: False
+    
+  ba_shapes_khop_graph:
+    rollout: 10
+    high2low: True
+    c_puct: 10.0
+    min_atoms: 5
+    expand_atoms: 10
+    reward_method: 'mc_l_shapley'
+    subgraph_building_method: 'zero_filling'
+    verbose: False
+    
+  ba_shapes_2hop_graph:
+    rollout: 10
+    high2low: True
+    c_puct: 10.0
+    min_atoms: 5
+    expand_atoms: 10
+    reward_method: 'mc_l_shapley'
+    subgraph_building_method: 'zero_filling'
+    verbose: False
