@@ -6,6 +6,7 @@ from torch_geometric.utils.loop import add_self_loops
 from torch.nn.functional import cross_entropy
 from .base_explainer import ExplainerBase
 from typing import Union
+
 EPS = 1e-15
 
 """
@@ -13,8 +14,15 @@ From DIG xgraph model utils
 https://github.com/divelab/DIG/blob/dig/dig/xgraph/models/utils.py
 """
 
-def subgraph(node_idx, num_hops, edge_index, relabel_nodes=False,
-                   num_nodes=None, flow='source_to_target'):
+
+def subgraph(
+    node_idx,
+    num_hops,
+    edge_index,
+    relabel_nodes=False,
+    num_nodes=None,
+    flow="source_to_target",
+):
     r"""Computes the :math:`k`-hop subgraph of :obj:`edge_index` around node
     :attr:`node_idx`.
     It returns (1) the nodes involved in the subgraph, (2) the filtered
@@ -43,20 +51,21 @@ def subgraph(node_idx, num_hops, edge_index, relabel_nodes=False,
 
     num_nodes = maybe_num_nodes(edge_index, num_nodes)
 
-    assert flow in ['source_to_target', 'target_to_source']
-    if flow == 'target_to_source':
+    assert flow in ["source_to_target", "target_to_source"]
+    if flow == "target_to_source":
         row, col = edge_index
     else:
-        col, row = edge_index # edge_index 0 to 1, col: source, row: target
+        col, row = edge_index  # edge_index 0 to 1, col: source, row: target
 
     node_mask = row.new_empty(num_nodes, dtype=torch.bool)
     edge_mask = row.new_empty(row.size(0), dtype=torch.bool)
 
     if isinstance(node_idx, (int, list, tuple)):
-        node_idx = torch.tensor([node_idx], device=row.device, dtype=torch.int64).flatten()
+        node_idx = torch.tensor(
+            [node_idx], device=row.device, dtype=torch.int64
+        ).flatten()
     else:
         node_idx = node_idx.to(row.device)
-
 
     inv = None
 
@@ -68,7 +77,7 @@ def subgraph(node_idx, num_hops, edge_index, relabel_nodes=False,
             torch.index_select(node_mask, 0, row, out=edge_mask)
             subsets.append(col[edge_mask])
         subset, inv = torch.cat(subsets).unique(return_inverse=True)
-        inv = inv[:node_idx.numel()]
+        inv = inv[: node_idx.numel()]
     else:
         subsets = node_idx
         cur_subsets = node_idx
@@ -90,7 +99,7 @@ def subgraph(node_idx, num_hops, edge_index, relabel_nodes=False,
     edge_index = edge_index[:, edge_mask]
 
     if relabel_nodes:
-        node_idx = row.new_full((num_nodes, ), -1)
+        node_idx = row.new_full((num_nodes,), -1)
         node_idx[subset] = torch.arange(subset.size(0), device=row.device)
         edge_index = node_idx[edge_index]
 
@@ -120,49 +129,57 @@ class GNNExplainer(ExplainerBase):
     """
 
     coeffs = {
-        'edge_size': 0.005,
-        'node_feat_size': 1.0,
-        'edge_ent': 1.0,
-        'node_feat_ent': 0.1,
+        "edge_size": 0.005,
+        "node_feat_size": 1.0,
+        "edge_ent": 1.0,
+        "node_feat_ent": 0.1,
     }
 
-    def __init__(self, model: torch.nn.Module, epochs: int = 100, lr: float = 0.01, explain_graph: bool = False):
+    def __init__(
+        self,
+        model: torch.nn.Module,
+        epochs: int = 100,
+        lr: float = 0.01,
+        explain_graph: bool = False,
+    ):
         super(GNNExplainer, self).__init__(model, epochs, lr, explain_graph)
 
     def __loss__(self, raw_preds: Tensor, x_label: Union[Tensor, int]):
         if self.explain_graph:
             loss = cross_entropy_with_logit(raw_preds, x_label)
         else:
-            loss = cross_entropy_with_logit(raw_preds[self.node_idx].reshape(1, -1), x_label)
+            loss = cross_entropy_with_logit(
+                raw_preds[self.node_idx].reshape(1, -1), x_label
+            )
 
         m = self.edge_mask.sigmoid()
-        loss = loss + self.coeffs['edge_size'] * m.sum()
+        loss = loss + self.coeffs["edge_size"] * m.sum()
         ent = -m * torch.log(m + EPS) - (1 - m) * torch.log(1 - m + EPS)
-        loss = loss + self.coeffs['edge_ent'] * ent.mean()
+        loss = loss + self.coeffs["edge_ent"] * ent.mean()
 
         if self.mask_features:
             m = self.node_feat_mask.sigmoid()
-            loss = loss + self.coeffs['node_feat_size'] * m.sum()
+            loss = loss + self.coeffs["node_feat_size"] * m.sum()
             ent = -m * torch.log(m + EPS) - (1 - m) * torch.log(1 - m + EPS)
-            loss = loss + self.coeffs['node_feat_ent'] * ent.mean()
+            loss = loss + self.coeffs["node_feat_ent"] * ent.mean()
 
         return loss
 
-    def gnn_explainer_alg(self,
-                          x: Tensor,
-                          edge_index: Tensor,
-                          ex_label: Tensor,
-                          mask_features: bool = False,
-                          **kwargs
-                          ) -> Tensor:
+    def gnn_explainer_alg(
+        self,
+        x: Tensor,
+        edge_index: Tensor,
+        ex_label: Tensor,
+        mask_features: bool = False,
+        **kwargs,
+    ) -> Tensor:
 
         # initialize a mask
         self.to(x.device)
         self.mask_features = mask_features
 
         # train to get the mask
-        optimizer = torch.optim.Adam([self.node_feat_mask, self.edge_mask],
-                                     lr=self.lr)
+        optimizer = torch.optim.Adam([self.node_feat_mask, self.edge_mask], lr=self.lr)
 
         for epoch in range(1, self.epochs + 1):
 
@@ -208,23 +225,28 @@ class GNNExplainer(ExplainerBase):
         # Only operate on a k-hop subgraph around `node_idx`.
         # Get subgraph and relabel the node, mapping is the relabeled given node_idx.
         if not self.explain_graph:
-            node_idx = kwargs.get('node_idx')
+            node_idx = kwargs.get("node_idx")
             if not node_idx.dim():
                 node_idx = node_idx.reshape(-1)
             node_idx = node_idx.to(self.device)
             self.node_idx = node_idx
             assert node_idx is not None
             _, _, _, self.hard_edge_mask = subgraph(
-                node_idx, self.__num_hops__, self_loop_edge_index, relabel_nodes=True,
-                num_nodes=None, flow=self.__flow__())
+                node_idx,
+                self.__num_hops__,
+                self_loop_edge_index,
+                relabel_nodes=True,
+                num_nodes=None,
+                flow=self.__flow__(),
+            )
 
-        if kwargs.get('edge_masks'):
-            edge_masks = kwargs.pop('edge_masks')
+        if kwargs.get("edge_masks"):
+            edge_masks = kwargs.pop("edge_masks")
             self.__set_masks__(x, self_loop_edge_index)
 
         else:
             # Assume the mask we will predict
-            labels = tuple(i for i in range(kwargs.get('num_classes')))
+            labels = tuple(i for i in range(kwargs.get("num_classes")))
             ex_labels = tuple(torch.tensor([label]).to(self.device) for label in labels)
 
             # Calculate mask
@@ -238,18 +260,22 @@ class GNNExplainer(ExplainerBase):
         # Need to normalize because of the add_self_loops below
         V = x.shape[0]
         E = edge_index.shape[1]
-        sparsity = 1 - (1 - kwargs.get('sparsity')) * V / (V + E)
+        sparsity = 1 - (1 - kwargs.get("sparsity")) * V / (V + E)
         ##------ normalize ---------
-        
-        hard_edge_masks = [self.control_sparsity(mask, sparsity=sparsity).sigmoid()
-                           for mask in edge_masks]
+
+        hard_edge_masks = [
+            self.control_sparsity(mask, sparsity=sparsity).sigmoid()
+            for mask in edge_masks
+        ]
 
         with torch.no_grad():
-            related_preds = self.eval_related_pred(x, edge_index, hard_edge_masks, **kwargs)
+            related_preds = self.eval_related_pred(
+                x, edge_index, hard_edge_masks, **kwargs
+            )
 
         self.__clear_masks__()
 
         return edge_masks, hard_edge_masks, related_preds
 
     def __repr__(self):
-        return f'{self.__class__.__name__}()'
+        return f"{self.__class__.__name__}()"

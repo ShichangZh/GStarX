@@ -2,7 +2,12 @@
 import torch
 from torch.utils.data import random_split, Subset
 from torch_geometric.data import DataLoader
-from dig.xgraph.dataset import MoleculeDataset, SynGraphDataset, SentiGraphDataset, BA_LRP
+from dig.xgraph.dataset import (
+    MoleculeDataset,
+    SynGraphDataset,
+    SentiGraphDataset,
+    BA_LRP,
+)
 
 import os
 import torch
@@ -18,17 +23,19 @@ import shutil
 def get_dataset(dataset_root, dataset_name):
     if dataset_name.lower() in list(MoleculeDataset.names.keys()):
         return MoleculeDataset(root=dataset_root, name=dataset_name)
-    elif dataset_name.lower() in ['graph_sst2', 'graph_sst5', 'twitter']:
+    elif dataset_name.lower() in ["graph_sst2", "graph_sst5", "twitter"]:
         return SentiGraphDataset(root=dataset_root, name=dataset_name)
     elif dataset_name.lower() in list(SynGraphDataset.names.keys()):
         return SynGraphDataset(root=dataset_root, name=dataset_name)
-    elif dataset_name.lower() in ['ba_lrp']:
+    elif dataset_name.lower() in ["ba_lrp"]:
         return BA_LRP(root=dataset_root)
     else:
         raise ValueError(f"{dataset_name} is not defined.")
 
 
-def get_dataloader(dataset, batch_size, random_split_flag=True, data_split_ratio=None, seed=2):
+def get_dataloader(
+    dataset, batch_size, random_split_flag=True, data_split_ratio=None, seed=2
+):
     """
     Args:
         dataset:
@@ -40,9 +47,9 @@ def get_dataloader(dataset, batch_size, random_split_flag=True, data_split_ratio
         a dictionary of training, validation, and testing dataLoader
     """
 
-    if not random_split_flag and hasattr(dataset, 'supplement'):
-        assert 'split_indices' in dataset.supplement.keys(), "split idx"
-        split_indices = dataset.supplement['split_indices']
+    if not random_split_flag and hasattr(dataset, "supplement"):
+        assert "split_indices" in dataset.supplement.keys(), "split idx"
+        split_indices = dataset.supplement["split_indices"]
         train_indices = torch.where(split_indices == 0)[0].numpy().tolist()
         dev_indices = torch.where(split_indices == 1)[0].numpy().tolist()
         test_indices = torch.where(split_indices == 2)[0].numpy().tolist()
@@ -55,18 +62,14 @@ def get_dataloader(dataset, batch_size, random_split_flag=True, data_split_ratio
         num_eval = int(data_split_ratio[1] * len(dataset))
         num_test = len(dataset) - num_train - num_eval
 
-        train, eval, test = random_split(dataset,
-                                         lengths=[num_train, num_eval, num_test],
-                                         generator=torch.Generator().manual_seed(seed))
+        train, eval, test = random_split(
+            dataset,
+            lengths=[num_train, num_eval, num_test],
+            generator=torch.Generator().manual_seed(seed),
+        )
 
     dataloader = dict()
-    dataloader['train'] = DataLoader(train, batch_size=batch_size, shuffle=True)
-    dataloader['eval'] = DataLoader(eval, batch_size=batch_size, shuffle=False)
-    dataloader['test'] = DataLoader(test, batch_size=batch_size, shuffle=False)
+    dataloader["train"] = DataLoader(train, batch_size=batch_size, shuffle=True)
+    dataloader["eval"] = DataLoader(eval, batch_size=batch_size, shuffle=False)
+    dataloader["test"] = DataLoader(test, batch_size=batch_size, shuffle=False)
     return dataloader
-
-
-
-
-
-

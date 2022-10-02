@@ -1,7 +1,7 @@
 <!-- #region -->
 # <ins>G</ins>raph <ins>St</ins>ructure-<ins>a</ins>wa<ins>r</ins>e E<ins>x</ins>planation (GStarX)
 
-Code for [Explaining Graph Neural Networks with Structure-Aware Cooperative Games](https://arxiv.org/abs/2201.12380) by [Shichang Zhang](https://shichangzh.github.io/), [Neil Shah](http://nshah.net/), [Yozen Liu](https://research.snap.com/team/yozen-liu/), and [Yizhou Sun](http://web.cs.ucla.edu/~yzsun/).
+Code for [Explaining Graph Neural Networks with Structure-Aware Cooperative Games](https://arxiv.org/abs/2201.12380) by [Shichang Zhang](https://shichangzh.github.io/), [Yozen Liu](https://research.snap.com/team/yozen-liu/), [Neil Shah](http://nshah.net/), and [Yizhou Sun](http://web.cs.ucla.edu/~yzsun/).
 
 
 ## Visualizations
@@ -42,7 +42,7 @@ pip install -r requirements.txt
 
 
 ### Datasets
-To run experiments for datasets used in the paper, please download them from this [link](https://github.com/divelab/DIG/tree/main/dig/xgraph/datasets) and put them under `datasets/` (all dataset folder should be in lowercase, some of them need to be renamed. Please check `dataset.py`). 
+To run experiments for datasets used in the paper, please download them from this [link](https://github.com/divelab/DIG/tree/main/dig/xgraph/datasets) and put them under `datasets/` (all dataset folder names should be in **lowercase**, some of them need to be renamed. Please be consistent with `dataset.py`). 
 
 You may also add your favourite datasets by modifying the `get_dataset` function in `dataset.py`.
 

@@ -7,12 +7,12 @@ from .graphsvx import GraphSVX
 from .orphicx import VGAE3MLP, Orphicx
 
 __all__ = [
-    'GNNExplainer',
-    'PGExplainer',
-    'PGExplainer_edges',
-    'SubgraphX',
-    'ExplainerBase',
-    'GraphSVX',
-    'VGAE3MLP',
-    'Orphicx'
+    "GNNExplainer",
+    "PGExplainer",
+    "PGExplainer_edges",
+    "SubgraphX",
+    "ExplainerBase",
+    "GraphSVX",
+    "VGAE3MLP",
+    "Orphicx",
 ]

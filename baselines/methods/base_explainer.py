@@ -19,8 +19,15 @@ From DIG xgraph model utils
 https://github.com/divelab/DIG/blob/dig/dig/xgraph/models/utils.py
 """
 
-def subgraph(node_idx, num_hops, edge_index, relabel_nodes=False,
-                   num_nodes=None, flow='source_to_target'):
+
+def subgraph(
+    node_idx,
+    num_hops,
+    edge_index,
+    relabel_nodes=False,
+    num_nodes=None,
+    flow="source_to_target",
+):
     r"""Computes the :math:`k`-hop subgraph of :obj:`edge_index` around node
     :attr:`node_idx`.
     It returns (1) the nodes involved in the subgraph, (2) the filtered
@@ -49,20 +56,21 @@ def subgraph(node_idx, num_hops, edge_index, relabel_nodes=False,
 
     num_nodes = maybe_num_nodes(edge_index, num_nodes)
 
-    assert flow in ['source_to_target', 'target_to_source']
-    if flow == 'target_to_source':
+    assert flow in ["source_to_target", "target_to_source"]
+    if flow == "target_to_source":
         row, col = edge_index
     else:
-        col, row = edge_index # edge_index 0 to 1, col: source, row: target
+        col, row = edge_index  # edge_index 0 to 1, col: source, row: target
 
     node_mask = row.new_empty(num_nodes, dtype=torch.bool)
     edge_mask = row.new_empty(row.size(0), dtype=torch.bool)
 
     if isinstance(node_idx, (int, list, tuple)):
-        node_idx = torch.tensor([node_idx], device=row.device, dtype=torch.int64).flatten()
+        node_idx = torch.tensor(
+            [node_idx], device=row.device, dtype=torch.int64
+        ).flatten()
     else:
         node_idx = node_idx.to(row.device)
-
 
     inv = None
 
@@ -74,7 +82,7 @@ def subgraph(node_idx, num_hops, edge_index, relabel_nodes=False,
             torch.index_select(node_mask, 0, row, out=edge_mask)
             subsets.append(col[edge_mask])
         subset, inv = torch.cat(subsets).unique(return_inverse=True)
-        inv = inv[:node_idx.numel()]
+        inv = inv[: node_idx.numel()]
     else:
         subsets = node_idx
         cur_subsets = node_idx
@@ -96,23 +104,33 @@ def subgraph(node_idx, num_hops, edge_index, relabel_nodes=False,
     edge_index = edge_index[:, edge_mask]
 
     if relabel_nodes:
-        node_idx = row.new_full((num_nodes, ), -1)
+        node_idx = row.new_full((num_nodes,), -1)
         node_idx[subset] = torch.arange(subset.size(0), device=row.device)
         edge_index = node_idx[edge_index]
 
     return subset, edge_index, inv, edge_mask
 
-class ExplainerBase(nn.Module):
 
-    def __init__(self, model: nn.Module, epochs: int = 0, lr: float = 0, explain_graph: bool = False,
-                 molecule: bool = False):
+class ExplainerBase(nn.Module):
+    def __init__(
+        self,
+        model: nn.Module,
+        epochs: int = 0,
+        lr: float = 0,
+        explain_graph: bool = False,
+        molecule: bool = False,
+    ):
         super().__init__()
         self.model = model
         self.lr = lr
         self.epochs = epochs
         self.explain_graph = explain_graph
         self.molecule = molecule
-        self.mp_layers = [module for module in self.model.modules() if isinstance(module, MessagePassing)]
+        self.mp_layers = [
+            module
+            for module in self.model.modules()
+            if isinstance(module, MessagePassing)
+        ]
         self.num_layers = len(self.mp_layers)
 
         self.ori_pred = None
@@ -129,10 +147,14 @@ class ExplainerBase(nn.Module):
         (N, F), E = x.size(), edge_index.size(1)
 
         std = 0.1
-        self.node_feat_mask = torch.nn.Parameter(torch.randn(F, requires_grad=True, device=self.device) * 0.1)
+        self.node_feat_mask = torch.nn.Parameter(
+            torch.randn(F, requires_grad=True, device=self.device) * 0.1
+        )
 
-        std = torch.nn.init.calculate_gain('relu') * sqrt(2.0 / (2 * N))
-        self.edge_mask = torch.nn.Parameter(torch.randn(E, requires_grad=True, device=self.device) * std)
+        std = torch.nn.init.calculate_gain("relu") * sqrt(2.0 / (2 * N))
+        self.edge_mask = torch.nn.Parameter(
+            torch.randn(E, requires_grad=True, device=self.device) * std
+        )
         # self.edge_mask = torch.nn.Parameter(100 * torch.ones(E, requires_grad=True))
 
         for module in self.model.modules():
@@ -159,14 +181,19 @@ class ExplainerBase(nn.Module):
         for module in self.model.modules():
             if isinstance(module, MessagePassing):
                 return module.flow
-        return 'source_to_target'
+        return "source_to_target"
 
     def __subgraph__(self, node_idx: int, x: Tensor, edge_index: Tensor, **kwargs):
         num_nodes, num_edges = x.size(0), edge_index.size(1)
 
         subset, edge_index, mapping, edge_mask = subgraph(
-            node_idx, self.__num_hops__, edge_index, relabel_nodes=True,
-            num_nodes=num_nodes, flow=self.__flow__())
+            node_idx,
+            self.__num_hops__,
+            edge_index,
+            relabel_nodes=True,
+            num_nodes=num_nodes,
+            flow=self.__flow__(),
+        )
 
         x = x[subset]
         for key, item in kwargs.items():
@@ -178,11 +205,7 @@ class ExplainerBase(nn.Module):
 
         return x, edge_index, mapping, edge_mask, kwargs
 
-    def forward(self,
-                x: Tensor,
-                edge_index: Tensor,
-                **kwargs
-                ):
+    def forward(self, x: Tensor, edge_index: Tensor, **kwargs):
         self.num_edges = edge_index.shape[1]
         self.num_nodes = x.shape[0]
         self.device = x.device
@@ -204,27 +227,35 @@ class ExplainerBase(nn.Module):
             mask_len = sub_mask.shape[0]
             _, sub_indices = torch.sort(sub_mask, descending=True)
             split_point = int((1 - sparsity) * mask_len)
-            important_sub_indices = sub_indices[: split_point]
+            important_sub_indices = sub_indices[:split_point]
             important_indices = mask_indices[important_sub_indices]
             unimportant_sub_indices = sub_indices[split_point:]
             unimportant_indices = mask_indices[unimportant_sub_indices]
             trans_mask = mask.clone()
-            trans_mask[:] = - float('inf')
-            trans_mask[important_indices] = float('inf')
+            trans_mask[:] = -float("inf")
+            trans_mask[important_indices] = float("inf")
         else:
             _, indices = torch.sort(mask, descending=True)
             mask_len = mask.shape[0]
             split_point = int((1 - sparsity) * mask_len)
-            important_indices = indices[: split_point]
+            important_indices = indices[:split_point]
             unimportant_indices = indices[split_point:]
             trans_mask = mask.clone()
-            trans_mask[important_indices] = float('inf')
-            trans_mask[unimportant_indices] = - float('inf')
-            
+            trans_mask[important_indices] = float("inf")
+            trans_mask[unimportant_indices] = -float("inf")
+
         return trans_mask
 
-    def visualize_graph(self, node_idx: int, edge_index: Tensor, edge_mask: Tensor, y: Tensor = None,
-                        threshold: float = None, nolabel: bool = True, **kwargs) -> Tuple[Axes, nx.DiGraph]:
+    def visualize_graph(
+        self,
+        node_idx: int,
+        edge_index: Tensor,
+        edge_mask: Tensor,
+        y: Tensor = None,
+        threshold: float = None,
+        nolabel: bool = True,
+        **kwargs,
+    ) -> Tuple[Axes, nx.DiGraph]:
         r"""Visualizes the subgraph around :attr:`node_idx` given an edge mask
         :attr:`edge_mask`.
 
@@ -243,7 +274,7 @@ class ExplainerBase(nn.Module):
 
         :rtype: :class:`matplotlib.axes.Axes`, :class:`networkx.DiGraph`
         """
-        edge_index, _ = add_self_loops(edge_index, num_nodes=kwargs.get('num_nodes'))
+        edge_index, _ = add_self_loops(edge_index, num_nodes=kwargs.get("num_nodes"))
         assert edge_mask.size(0) == edge_index.size(1)
 
         if self.molecule:
@@ -251,51 +282,62 @@ class ExplainerBase(nn.Module):
 
         # Only operate on a k-hop subgraph around `node_idx`.
         subset, edge_index, _, hard_edge_mask = subgraph(
-            node_idx, self.__num_hops__, edge_index, relabel_nodes=True,
-            num_nodes=None, flow=self.__flow__())
+            node_idx,
+            self.__num_hops__,
+            edge_index,
+            relabel_nodes=True,
+            num_nodes=None,
+            flow=self.__flow__(),
+        )
 
         edge_mask = edge_mask[hard_edge_mask]
 
         # --- temp ---
-        edge_mask[edge_mask == float('inf')] = 1
-        edge_mask[edge_mask == - float('inf')] = 0
+        edge_mask[edge_mask == float("inf")] = 1
+        edge_mask[edge_mask == -float("inf")] = 0
         # ---
 
         if threshold is not None:
             edge_mask = (edge_mask >= threshold).to(torch.float)
 
-        if kwargs.get('dataset_name') == 'ba_lrp':
-            y = torch.zeros(edge_index.max().item() + 1,
-                            device=edge_index.device)
+        if kwargs.get("dataset_name") == "ba_lrp":
+            y = torch.zeros(edge_index.max().item() + 1, device=edge_index.device)
         if y is None:
-            y = torch.zeros(edge_index.max().item() + 1,
-                            device=edge_index.device)
+            y = torch.zeros(edge_index.max().item() + 1, device=edge_index.device)
         else:
             y = y[subset]
 
         if self.molecule:
-            atom_colors = {6: '#8c69c5', 7: '#71bcf0', 8: '#aef5f1', 9: '#bdc499', 15: '#c22f72', 16: '#f3ea19',
-                           17: '#bdc499', 35: '#cc7161'}
+            atom_colors = {
+                6: "#8c69c5",
+                7: "#71bcf0",
+                8: "#aef5f1",
+                9: "#bdc499",
+                15: "#c22f72",
+                16: "#f3ea19",
+                17: "#bdc499",
+                35: "#cc7161",
+            }
             node_colors = [None for _ in range(y.shape[0])]
             for y_idx in range(y.shape[0]):
                 node_colors[y_idx] = atom_colors[y[y_idx].int().tolist()]
         else:
-            atom_colors = {0: '#8c69c5', 1: '#c56973', 2: '#a1c569', 3: '#69c5ba'}
+            atom_colors = {0: "#8c69c5", 1: "#c56973", 2: "#a1c569", 3: "#69c5ba"}
             node_colors = [None for _ in range(y.shape[0])]
             for y_idx in range(y.shape[0]):
                 node_colors[y_idx] = atom_colors[y[y_idx].int().tolist()]
 
-
-        data = Data(edge_index=edge_index, att=edge_mask, y=y,
-                    num_nodes=y.size(0)).to('cpu')
-        G = to_networkx(data, node_attrs=['y'], edge_attrs=['att'])
+        data = Data(edge_index=edge_index, att=edge_mask, y=y, num_nodes=y.size(0)).to(
+            "cpu"
+        )
+        G = to_networkx(data, node_attrs=["y"], edge_attrs=["att"])
         mapping = {k: i for k, i in enumerate(subset.tolist())}
         G = nx.relabel_nodes(G, mapping)
 
-        kwargs['with_labels'] = kwargs.get('with_labels') or True
-        kwargs['font_size'] = kwargs.get('font_size') or 10
-        kwargs['node_size'] = kwargs.get('node_size') or 250
-        kwargs['cmap'] = kwargs.get('cmap') or 'cool'
+        kwargs["with_labels"] = kwargs.get("with_labels") or True
+        kwargs["font_size"] = kwargs.get("font_size") or 10
+        kwargs["node_size"] = kwargs.get("node_size") or 250
+        kwargs["cmap"] = kwargs.get("cmap") or "cool"
 
         # calculate Graph positions
         pos = nx.kamada_kawai_layout(G)
@@ -303,26 +345,34 @@ class ExplainerBase(nn.Module):
 
         for source, target, data in G.edges(data=True):
             ax.annotate(
-                '', xy=pos[target], xycoords='data', xytext=pos[source],
-                textcoords='data', arrowprops=dict(
+                "",
+                xy=pos[target],
+                xycoords="data",
+                xytext=pos[source],
+                textcoords="data",
+                arrowprops=dict(
                     arrowstyle="->",
-                    lw=max(data['att'], 0.5) * 2,
-                    alpha=max(data['att'], 0.4),  # alpha control transparency
-                    color='#e1442a',  # color control color
-                    shrinkA=sqrt(kwargs['node_size']) / 2.0,
-                    shrinkB=sqrt(kwargs['node_size']) / 2.0,
+                    lw=max(data["att"], 0.5) * 2,
+                    alpha=max(data["att"], 0.4),  # alpha control transparency
+                    color="#e1442a",  # color control color
+                    shrinkA=sqrt(kwargs["node_size"]) / 2.0,
+                    shrinkB=sqrt(kwargs["node_size"]) / 2.0,
                     connectionstyle="arc3,rad=0.08",  # rad control angle
-                ))
+                ),
+            )
         nx.draw_networkx_nodes(G, pos, node_color=node_colors, **kwargs)
         # define node labels
         if self.molecule:
             if nolabel:
-                node_labels = {n: f'{self.table(atomic_num[n].int().item())}'
-                               for n in G.nodes()}
+                node_labels = {
+                    n: f"{self.table(atomic_num[n].int().item())}" for n in G.nodes()
+                }
                 nx.draw_networkx_labels(G, pos, labels=node_labels, **kwargs)
             else:
-                node_labels = {n: f'{n}:{self.table(atomic_num[n].int().item())}'
-                               for n in G.nodes()}
+                node_labels = {
+                    n: f"{n}:{self.table(atomic_num[n].int().item())}"
+                    for n in G.nodes()
+                }
                 nx.draw_networkx_labels(G, pos, labels=node_labels, **kwargs)
         else:
             if not nolabel:
@@ -330,36 +380,42 @@ class ExplainerBase(nn.Module):
 
         return ax, G
 
-    def eval_related_pred(self, x: Tensor, edge_index: Tensor, edge_masks: List[Tensor], **kwargs):
+    def eval_related_pred(
+        self, x: Tensor, edge_index: Tensor, edge_masks: List[Tensor], **kwargs
+    ):
 
-        node_idx = kwargs.get('node_idx')
-        node_idx = 0 if node_idx is None else node_idx  # graph level: 0, node level: node_idx
+        node_idx = kwargs.get("node_idx")
+        node_idx = (
+            0 if node_idx is None else node_idx
+        )  # graph level: 0, node level: node_idx
         related_preds = []
 
         # change the mask from -inf ~ +inf into 0 ~ 1
         for ex_label, edge_mask in enumerate(edge_masks):
-#             if self.hard_edge_mask is not None:
-#                 sparsity = 1.0 - (edge_mask[self.hard_edge_mask] != 0).sum() / edge_mask[self.hard_edge_mask].size(0)
-#             else:
-#                 sparsity = 1.0 - (edge_mask != 0).sum() / edge_mask.size(0)
+            #             if self.hard_edge_mask is not None:
+            #                 sparsity = 1.0 - (edge_mask[self.hard_edge_mask] != 0).sum() / edge_mask[self.hard_edge_mask].size(0)
+            #             else:
+            #                 sparsity = 1.0 - (edge_mask != 0).sum() / edge_mask.size(0)
 
-            '''
+            """
             Correct sparsity computation
-            '''
+            """
             if self.hard_edge_mask is not None:
                 edge_mask[~self.hard_edge_mask.bool()] = 0
             if edge_mask.view(-1).shape[0] == edge_index.shape[1]:
                 selected_edge_index = edge_index[:, edge_mask.bool()]
             else:
-                self_loop_edge_index, _ = add_self_loops(edge_index, num_nodes=self.num_nodes)
+                self_loop_edge_index, _ = add_self_loops(
+                    edge_index, num_nodes=self.num_nodes
+                )
                 selected_edge_index = self_loop_edge_index[:, edge_mask.bool()]
-                
+
             selected_nodes = selected_edge_index.view(-1).unique()
             sparsity = torch.tensor(1.0 - selected_nodes.shape[0] / x.shape[0])
-            '''
+            """
             Correct sparsity computation
-            '''
-            
+            """
+
             self.edge_mask.data = torch.ones(edge_mask.size(), device=self.device)
             ori_pred = self.model(x=x, edge_index=edge_index, **kwargs)
 
@@ -374,16 +430,20 @@ class ExplainerBase(nn.Module):
             self.edge_mask.data = torch.zeros(edge_mask.size(), device=self.device)
             zero_mask_pred = self.model(x=x, edge_index=edge_index, **kwargs)
 
-            related_preds.append({'zero': zero_mask_pred[node_idx],
-                                  'masked': masked_pred[node_idx],
-                                  'maskout': maskout_pred[node_idx],
-                                  'origin': ori_pred[node_idx],
-                                  'sparsity': sparsity})
+            related_preds.append(
+                {
+                    "zero": zero_mask_pred[node_idx],
+                    "masked": masked_pred[node_idx],
+                    "maskout": maskout_pred[node_idx],
+                    "origin": ori_pred[node_idx],
+                    "sparsity": sparsity,
+                }
+            )
 
             # Adding proper activation function to the models' outputs.
             tmp_result_dict = {}
             for key, pred in related_preds[ex_label].items():
-                if key in ['sparsity']:
+                if key in ["sparsity"]:
                     tmp_result_dict[key] = pred.item()
                 else:
                     tmp_result_dict[key] = pred.reshape(-1).softmax(0)[ex_label].item()
