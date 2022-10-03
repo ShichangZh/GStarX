@@ -8,6 +8,8 @@ Code for [Explaining Graph Neural Networks with Structure-Aware Cooperative Game
 
 ### Explanation on the `graph-sst2` dataset
 
+GStarX concisely captures the important words for sentiment classification without including extraneous ones for either the positive sentence or the negative sentence.
+
 <p align="center">
   <br />
   <img src="imgs/sst_examples.png" width="1000">
@@ -15,6 +17,8 @@ Code for [Explaining Graph Neural Networks with Structure-Aware Cooperative Game
 </p>
 
 ### Explanation on the `mutag` dataset
+
+GStarX generates explanations with much better Fidelity/Inv-Fidelity/H-Fidelity than other methods and even better than the “ground truth” specified by the domain knowledge.
 
 <p align="center">
   <br />
@@ -72,7 +76,7 @@ python train_gnns.py datasets=ba_2motifs models=gat
 
 ## Results
 
-GStarX vs. baseline methods for graph prediction explanation in terms of the H-Fidelity metric corresponding to Table 1 and Table 6 in the paper.
+GStarX vs. other methods for graph prediction explanation in terms of the H-Fidelity metric. GStarX outperforms others on most datasets, on average, and on different GNN architectures. (Please see Table 1 and Table 2 in the paper).
 
 
 | Datasets        | GNNExplainer | PGExplainer  | SubgraphX    | GraphSVX     | OrphicX      | GStarX       |
