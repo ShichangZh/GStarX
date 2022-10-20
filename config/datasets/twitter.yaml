@@ -1,0 +1,6 @@
+dataset_root: 'dataset'
+dataset_name: 'twitter'
+random_split_flag: False
+data_split_ratio: None
+seed: 2
+data_explain_cutoff: -1

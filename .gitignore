@@ -1,4 +1,3 @@
-**/datasets
 **/results
 **/output
 **/*.npz
@@ -10,3 +9,5 @@
 **/log
 **/experiments
 **/temp
+datasets/*
+!config

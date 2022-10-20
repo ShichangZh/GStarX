@@ -1,0 +1,8 @@
+dataset_root: 'dataset'
+dataset_name: 'graph_sst2'
+random_split_flag: False
+data_split_ratio: None
+seed: 2
+# data_explain_cutoff: -1
+data_explain_cutoff: 30
+
